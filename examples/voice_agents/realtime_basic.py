@@ -25,7 +25,7 @@ load_dotenv()
 class Assistant(Agent):
     def __init__(self) -> None:
         super().__init__(
-            instructions="You are a helpful assistant that responds quickly.",
+            instructions="你是一个中文助手，请做到回答简洁并且友好。",
         )
 
     # To add tools, use the @function_tool decorator.

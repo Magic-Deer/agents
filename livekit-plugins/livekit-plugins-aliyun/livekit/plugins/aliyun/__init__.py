@@ -14,21 +14,21 @@
 
 """Aliyun Cloud plugin for LiveKit Agents
 
-Support for Aliyun Cloud Qwen Realtime API.
+Support for Aliyun Cloud Qwen Realtime API, STT, TTS, and LLM.
 
-See https://help.aliyun.com/zh/model-studio/realtime for more information.
+See https://help.aliyun.com/zh/model-studio for more information.
 """
 
 from . import realtime
-from .models import (
-    TTSVoices,
-    RealtimeModels,
-)
+from .llm import LLM
+from .stt import STT
+from .tts import TTS
 from .version import __version__
 
 __all__ = [
-    "TTSVoices"
-    "RealtimeModels",
+    "LLM",
+    "STT",
+    "TTS",
     "realtime",
     "__version__",
 ]

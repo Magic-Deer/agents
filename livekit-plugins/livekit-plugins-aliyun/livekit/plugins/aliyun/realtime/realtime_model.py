@@ -34,7 +34,7 @@ from livekit import rtc
 from livekit.agents import llm, utils
 from livekit.agents.types import NOT_GIVEN, NotGivenOr
 
-from .. import models
+from . import models
 from ..log import logger
 from . import api_proto, utils as realtime_utils
 
@@ -65,19 +65,14 @@ class _RealtimeOptions:
     max_session_duration: float | None
 
 
-DEFAULT_MODEL = "qwen3-omni-flash-realtime"
-DEFAULT_VOICE = "Cherry"
-ALIYUN_REALTIME_BASE_URL = "wss://dashscope.aliyuncs.com/api-ws/v1/realtime"
-
-
 class RealtimeModel(llm.RealtimeModel):
     """Qwen Realtime API implementation."""
 
     def __init__(
         self,
         *,
-        model: str = DEFAULT_MODEL,
-        voice: str = DEFAULT_VOICE,
+        model: str = models.DEFAULT_MODEL,
+        voice: str = models.DEFAULT_VOICE,
         modalities: list[Literal["text", "audio"]] = ["text", "audio"],
         instructions: str | None = None,
         turn_detection: TurnDetection | None = TurnDetection(),
@@ -87,7 +82,7 @@ class RealtimeModel(llm.RealtimeModel):
         max_tokens: int | None = None,
         smooth_output: bool | None = None,
         api_key: str | None = None,
-        base_url: str = ALIYUN_REALTIME_BASE_URL,
+        base_url: str = models.BASE_URL,
         max_session_duration: float | None = 110 * 60,  # 110 minutes
     ) -> None:
         # Get API key from environment if not provided

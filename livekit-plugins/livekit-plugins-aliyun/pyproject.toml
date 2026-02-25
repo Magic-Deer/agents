@@ -23,6 +23,8 @@ classifiers = [
 ]
 dependencies = [
     "livekit-agents[codecs, images]>=1.4.3",
+    "openai>=1.0.0",
+    "osc-data>=0.2.2",
 ]
 
 [project.urls]

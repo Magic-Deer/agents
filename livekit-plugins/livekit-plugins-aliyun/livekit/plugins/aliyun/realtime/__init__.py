@@ -14,7 +14,7 @@
 
 """Qwen Realtime API module."""
 
-from .realtime_model import RealtimeModel, TurnDetection
+from .realtime_model import RealtimeSession, RealtimeModel, TurnDetection
 
 __all__ = [
     "RealtimeSession",
