@@ -52,6 +52,7 @@ livekit-plugins-smallestai = { workspace = true }
 livekit-plugins-simplismart = { workspace = true }
 livekit-plugins-soniox = { workspace = true }
 livekit-plugins-speechify = { workspace = true }
+livekit-plugins-stepfun = { workspace = true }
 livekit-plugins-browser = { workspace = true }
 livekit-plugins-speechmatics = { workspace = true }
 livekit-plugins-spitch = { workspace = true }
