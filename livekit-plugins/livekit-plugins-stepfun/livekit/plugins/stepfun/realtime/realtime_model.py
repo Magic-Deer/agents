@@ -721,14 +721,20 @@ class RealtimeSession(
                 if item.get("type") == "message" and item.get("content") is None:
                     item["content"] = []
                 if item.get("type") == "function_call":
+                    item_id = self._safe_str(item.get("id"))
+                    call_id = self._safe_str(item.get("call_id"))
+
+                    # Record the mapping from call_id to item_id for later use
+                    if item_id and call_id:
+                        self._function_item_by_call_id[call_id] = item_id
+
                     self._record_function_call(
-                        item_id=self._safe_str(item.get("id")),
-                        call_id=self._safe_str(item.get("call_id")),
+                        item_id=item_id,
+                        call_id=call_id,
                         name=self._safe_str(item.get("name")),
                         arguments=self._safe_str(item.get("arguments")),
                         done=item.get("arguments") is not None,
                     )
-                    item_id = self._safe_str(item.get("id"))
                     if item_id:
                         self._emit_function_call_if_ready(item_id)
             return
@@ -1012,19 +1018,10 @@ class RealtimeSession(
                     elif isinstance(ev, ConversationItemCreateEvent):
                         assert ev.item.id is not None
                         # Stepfun may not send conversation.item.created ack for function_call_output items
-                        # so we don't wait for them to avoid timeout, and sync optimistically immediately
-                        if ev.item.type == "function_call_output":
-                            logger.debug(f"Sending conversation.item.create (function_call_output): item_id={ev.item.id}, call_id={ev.item.call_id}, output={ev.item.output}")
-                            # Optimistically sync this item immediately
-                            item = _realtime_item_to_livekit_item(ev.item)
-                            try:
-                                self._remote_chat_ctx.insert(ev.previous_item_id if ev.previous_item_id != "root" else None, item)
-                            except ValueError as e:
-                                logger.warning(f"failed to optimistically insert function_call_output item: {e}")
-                        else:
+                        # so we don't wait for them to avoid timeout
+                        if ev.item.type != "function_call_output":
                             futs.append(f := asyncio.Future[None]())
                             self._item_create_future[ev.item.id] = f
-                            logger.debug(f"Sending conversation.item.create: item_id={ev.item.id}, type={ev.item.type}")
                     self.send_event(ev)
 
                 if not futs:
@@ -1067,6 +1064,13 @@ class RealtimeSession(
         def _create_item(previous_msg_id: str | None, msg_id: str) -> None:
             chat_item = chat_ctx.get_by_id(msg_id)
             assert chat_item is not None
+
+            # For function_call_output, use the server-side function_call item_id as previous_item_id
+            if chat_item.type == "function_call_output":
+                server_fnc_item_id = self._function_item_by_call_id.get(chat_item.call_id)
+                if server_fnc_item_id:
+                    previous_msg_id = server_fnc_item_id
+
             events.append(
                 ConversationItemCreateEvent(
                     type="conversation.item.create",
@@ -1440,6 +1444,11 @@ class RealtimeSession(
         assert (item_id := event.item.id) is not None, "item.id is None"
         assert (item_type := event.item.type) is not None, "item.type is None"
 
+        if item_type == "function_call":
+            # Record the mapping from call_id to item_id
+            if hasattr(event.item, 'call_id') and event.item.call_id:
+                self._function_item_by_call_id[event.item.call_id] = item_id
+
         if item_type == "message":
             item_generation = _MessageGeneration(
                 message_id=item_id,
@@ -1477,7 +1486,9 @@ class RealtimeSession(
     def _handle_conversion_item_created(self, event: ConversationItemCreatedEvent) -> None:
         assert event.item.id is not None, "item.id is None"
 
-        logger.debug(f"Received conversation.item.created: item_id={event.item.id}, type={event.item.type}")
+        # For function_call items, record the mapping from call_id to item_id
+        if event.item.type == "function_call" and event.item.call_id:
+            self._function_item_by_call_id[event.item.call_id] = event.item.id
 
         item = _realtime_item_to_livekit_item(event.item)
         previous_item_id = event.previous_item_id
@@ -1612,6 +1623,11 @@ class RealtimeSession(
 
         if item_type == "function_call":
             item = event.item
+
+            # Record the mapping from call_id to item_id
+            if item_id and item.call_id:
+                self._function_item_by_call_id[item.call_id] = item_id
+
             state = self._record_function_call(
                 item_id=item_id,
                 call_id=item.call_id,
@@ -1632,7 +1648,8 @@ class RealtimeSession(
     def _handle_response_done(self, event: ResponseDoneEvent) -> None:
         if self._current_generation is None:
             self._function_call_states.clear()
-            self._function_item_by_call_id.clear()
+            # Don't clear _function_item_by_call_id here - we still need it for function_call_output
+            # self._function_item_by_call_id.clear()
             return  # Provider may emit response.done without response.created during interruption.
 
         assert self._current_generation is not None, "current_generation is None"
@@ -1666,7 +1683,9 @@ class RealtimeSession(
             self._current_generation._done_fut.set_result(None)
         self._current_generation = None
         self._function_call_states.clear()
-        self._function_item_by_call_id.clear()
+        # Don't clear _function_item_by_call_id here - we still need it for function_call_output
+        # The mapping will be reused across multiple responses and only grows slowly
+        # self._function_item_by_call_id.clear()
 
         # calculate metrics
         usage = (
@@ -1804,7 +1823,6 @@ def _livekit_item_to_realtime_item(item: llm.ChatItem) -> ConversationItem:
         conversation_item.type = "function_call_output"
         conversation_item.call_id = item.call_id
         conversation_item.output = item.output
-        logger.debug(f"Creating function_call_output item: call_id={item.call_id}, output={item.output}")
 
     elif item.type == "message":
         role = "system" if item.role == "developer" else item.role
