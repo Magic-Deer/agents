@@ -12,7 +12,6 @@ from livekit.agents import (
 )
 from livekit.agents.llm import function_tool
 from livekit.plugins import aliyun
-from livekit.plugins.aliyun.realtime import TurnDetection
 
 # uncomment to enable Krisp background voice/noise cancellation
 # from livekit.plugins import noise_cancellation
@@ -25,7 +24,11 @@ load_dotenv()
 class Assistant(Agent):
     def __init__(self) -> None:
         super().__init__(
-            instructions="你是一个中文助手，请做到回答简洁并且友好。",
+            instructions=(
+                "你是一个中文助手，请做到回答简洁并且友好。"
+                "当工具返回结果后，你必须严格依据工具输出回答，"
+                "不要自行补充、改写或猜测数值。"
+            ),
         )
 
     # To add tools, use the @function_tool decorator.
@@ -36,6 +39,8 @@ class Assistant(Agent):
         """Use this tool to look up current weather information in the given location.
 
         If the location is not supported by the weather service, the tool will indicate this. You must tell the user the location's weather is unavailable.
+        When this tool returns concrete values (for example temperature), the assistant must keep
+        the values and units exactly as returned.
 
         Args:
             location: The location to look up weather information for (e.g. city name)
@@ -43,7 +48,7 @@ class Assistant(Agent):
 
         logger.info(f"Looking up weather for {location}")
 
-        return "sunny with a temperature of 70 degrees."
+        return "今天的气温是31.5摄氏度"
 
 
 server = AgentServer()
@@ -67,13 +72,12 @@ async def my_agent(ctx: JobContext):
         llm=aliyun.realtime.RealtimeModel(
             model="qwen3-omni-flash-realtime",
             voice="Cherry",
-            turn_detection=TurnDetection(
+            turn_detection=aliyun.realtime.TurnDetection(
                 threshold=0.6,  # Higher threshold = more sensitive
                 silence_duration_ms=1000,  # Wait 1 second of silence
                 prefix_padding_ms=300,  # Include 300ms before speech
             ),
-            instructions="You are a helpful assistant that responds quickly.",
-            temperature=0.7,
+            temperature=0.1,
         )
     )
 
