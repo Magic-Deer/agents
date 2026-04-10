@@ -86,13 +86,7 @@ def _copy_turn_detection(
 
 def _to_aliyun_language(language: str | LanguageCode) -> str:
     normalized = LanguageCode(str(language))
-
-    raw = str(normalized).lower()
-    if raw.startswith("zh-"):
-        return "zh"
-    if raw.startswith("en-"):
-        return "en"
-    return raw
+    return normalized.language
 
 
 def _resolve_speech_language(
