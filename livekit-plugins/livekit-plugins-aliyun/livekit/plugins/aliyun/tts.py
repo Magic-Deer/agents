@@ -218,7 +218,9 @@ async def _send_event(
     await ws.send_json(event)
 
 
-def _require_active_response_id(data: dict[str, Any], *, response_id: str | None, context: str) -> str:
+def _require_active_response_id(
+    data: dict[str, Any], *, response_id: str | None, context: str
+) -> str:
     if response_id is None:
         raise APIStatusError(
             message=f"Aliyun TTS received {context} before response.created",
@@ -323,7 +325,7 @@ class SynthesizeStream(tts.SynthesizeStream):
         conn_options: APIConnectOptions,
     ) -> None:
         super().__init__(tts=tts, conn_options=conn_options)
-        self._tts = tts
+        self._tts: TTS = tts
         self._opts = dataclasses.replace(tts._opts)
 
     @utils.log_exceptions(logger=logger)
@@ -366,6 +368,7 @@ class SynthesizeStream(tts.SynthesizeStream):
                 self._tts.session.ws_connect(url, headers=headers),
                 self._conn_options.timeout,
             )
+            assert ws is not None
 
             first_event = await self._receive_handshake_event(ws)
             first_type = first_event.get("type")
@@ -387,6 +390,7 @@ class SynthesizeStream(tts.SynthesizeStream):
                 if event_type == "session.updated":
                     connected = True
                     self._acquire_time = time.perf_counter() - started_at
+                    assert ws is not None
                     return ws
                 if event_type == "error":
                     raise _status_error_from_event(event, "Aliyun TTS error")
