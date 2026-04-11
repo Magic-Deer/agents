@@ -1,12 +1,11 @@
-from .stt import STT
-from .version import __version__
-
-__all__ = ["STT", "__version__"]
-
-
 from livekit.agents import Plugin
 
 from .log import logger
+from .stt import STT
+from .tts import TTS
+from .version import __version__
+
+__all__ = ["STT", "TTS", "__version__"]
 
 
 class AliyunPlugin(Plugin):
