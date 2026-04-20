@@ -1,12 +1,13 @@
 # Aliyun plugin for LiveKit Agents
 
-Realtime speech-to-text and text-to-speech support for LiveKit Agents using Aliyun
-DashScope.
+Realtime speech-to-text, text-to-speech, and LLM support for LiveKit Agents using
+Aliyun DashScope.
 
 The plugin exposes:
 
 - `livekit.plugins.aliyun.STT`
 - `livekit.plugins.aliyun.TTS`
+- `livekit.plugins.aliyun.LLM`
 
 ## Installation
 
@@ -29,12 +30,40 @@ from livekit.plugins import aliyun
 load_dotenv()
 
 session = AgentSession(
+    llm=aliyun.LLM(),
     stt=aliyun.STT(),
     tts=aliyun.TTS(),
 )
 
 agent = Agent(instructions="Reply briefly and clearly.")
 ```
+
+## LLM
+
+### Common Options
+
+```python
+from livekit.plugins import aliyun
+
+llm = aliyun.LLM(
+    model="qwen-plus",
+    enable_thinking=False,
+)
+```
+
+- `api_key`: DashScope API key. Overrides the environment variable.
+- `model`: DashScope OpenAI-compatible chat model name. Defaults to `qwen-plus`.
+- `base_url`: Override the OpenAI-compatible endpoint. Defaults to
+  `https://dashscope.aliyuncs.com/compatible-mode/v1`.
+- `enable_thinking`: Whether to enable Qwen deep-thinking mode. Defaults to `False`.
+- `thinking_budget`: Optional token budget for thinking mode. Requires
+  `enable_thinking=True`.
+- `max_tokens`: Optional maximum output token count.
+- `seed`: Optional deterministic sampling seed.
+- `tool_choice`: Supports `auto`, `none`, and forcing a specific function tool. The
+  `required` option is not supported.
+- `preserve_thinking`: Not supported in this version. Reasoning content is not persisted
+  or returned as ordinary text.
 
 ## STT
 
