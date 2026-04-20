@@ -9,7 +9,7 @@ description = "Aliyun implementation for LiveKit Agents"
 readme = "README.md"
 requires-python = ">=3.10.0"
 dependencies = [
-    "livekit-agents>=1.5.1",
+    "livekit-agents[openai]>=1.5.1",
     "aiohttp>=3.10.0",
 ]
 
