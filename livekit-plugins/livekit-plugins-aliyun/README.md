@@ -12,7 +12,7 @@ The plugin exposes:
 ## Installation
 
 ```bash
-pip install livekit-plugins-aliyun
+pip install livekit-plugins-alicloud
 ```
 
 ## Pre-requisites

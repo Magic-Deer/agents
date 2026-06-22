@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "livekit-plugins-aliyun"
+name = "livekit-plugins-alicloud"
 dynamic = ["version"]
 description = "Aliyun implementation for LiveKit Agents"
 readme = "README.md"
