@@ -43,6 +43,7 @@ class LLM(OpenAILLM):
         extra_headers: NotGivenOr[dict[str, str]] = NOT_GIVEN,
         extra_query: NotGivenOr[dict[str, str]] = NOT_GIVEN,
         timeout: httpx.Timeout | None = None,
+        max_retries: NotGivenOr[int] = NOT_GIVEN,
     ) -> None:
         """
         Create a new instance of Aliyun DashScope LLM.
@@ -76,6 +77,7 @@ class LLM(OpenAILLM):
             extra_headers=extra_headers,
             extra_query=extra_query,
             timeout=timeout,
+            max_retries=max_retries,
             _strict_tool_schema=False,
         )
 
